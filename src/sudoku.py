@@ -55,8 +55,8 @@ class Sudoku:
     
     def excluded_at(self, cell: Cell) -> set:
         r = set([c.value for c in self.row_at(cell.row) if c.value > 0])
-        c = set([c.value for c in self.row_at(cell.col) if c.value > 0])
-        box = set([c.value for c in self.row_at(cell.box) if c.value > 0])
+        c = set([c.value for c in self.col_at(cell.col) if c.value > 0])
+        box = set([c.value for c in self.box_at(cell.box) if c.value > 0])
         to_exclude = r | c | box
         return to_exclude
     
@@ -72,15 +72,11 @@ class Sudoku:
                 self.set_candidates(cell)
     
     def populate_singles(self):
-        singles = dict()
         for row in range(9):
             for col in range(9):
-                candidates = self.candidates_at(row, col)
-                if len(candidates) == 1:
-                    singles[(row, col)] = candidates[0]
-                    self.grid[row, col] = candidates[0]
-        
-        return singles
+                cell = self.cell_at(row, col)
+                if len(cell.candidates) == 1:
+                    cell.set_value(cell.candidates.pop())
     
     def populate_hidden_singles_at(self, row: int, col: int):
         pass
