@@ -25,7 +25,7 @@ class Cell:
         self.value = n
         self.candidates = set()
 
-class Sudoku:
+class SudokuPuzzle:
     def __init__(self, arr: npt.NDArray[np.int8]):
         if arr.shape != (9, 9):
             raise ValueError("Sudoku grid must be 9x9")
@@ -71,17 +71,11 @@ class Sudoku:
             for cell in row:
                 self.set_candidates(cell)
     
-    def populate_singles(self):
-        for row in range(9):
-            for col in range(9):
-                cell = self.cell_at(row, col)
-                if len(cell.candidates) == 1:
-                    cell.set_value(cell.candidates.pop())
-    
-    def populate_hidden_singles_at(self, row: int, col: int):
-        pass
+    def is_solved(self):
+        mask = np.vectorize(lambda cell: not cell.is_solved)(self.grid)
+        unsolved = self.grid[mask]
+        return len(unsolved) == 0
 
-
-
-
-
+    def get_singles(self):
+        mask = np.vectorize(lambda cell: len(cell.candidates) == 1)(self.grid)
+        return self.grid[mask]
