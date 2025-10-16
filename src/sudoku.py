@@ -26,6 +26,8 @@ class Cell:
         self.candidates = set()
 
 class SudokuPuzzle:
+    ALL_VALUES = set(range(1, 10))
+
     def __init__(self, arr: npt.NDArray[np.int8]):
         if arr.shape != (9, 9):
             raise ValueError("Sudoku grid must be 9x9")
@@ -53,7 +55,7 @@ class SudokuPuzzle:
         r0, c0 = (box // 3) * 3, (box % 3) * 3
         return [self.grid[r, c] for r in range(r0, r0+3) for c in range(c0, c0+3)]
     
-    def excluded_at(self, cell: Cell) -> set:
+    def excluded_at(self, cell: Cell) -> set[int]:
         r = set([c.value for c in self.row_at(cell.row) if c.value > 0])
         c = set([c.value for c in self.col_at(cell.col) if c.value > 0])
         box = set([c.value for c in self.box_at(cell.box) if c.value > 0])
@@ -63,19 +65,41 @@ class SudokuPuzzle:
     def set_candidates(self, cell: Cell):
         if cell.value == 0:
             exclusions = self.excluded_at(cell)
-            candidates = set([1, 2, 3, 4, 5, 6, 7, 8, 9])
-            cell.candidates = candidates - exclusions
+            cell.candidates = self.ALL_VALUES - exclusions
     
     def populate_candidates(self):
         for row in self.grid:
             for cell in row:
                 self.set_candidates(cell)
     
-    def is_solved(self):
-        mask = np.vectorize(lambda cell: not cell.is_solved)(self.grid)
-        unsolved = self.grid[mask]
-        return len(unsolved) == 0
+    def is_solved(self) -> bool:
+        return all(cell.is_solved for row in self.grid for cell in row)
 
-    def get_singles(self):
-        mask = np.vectorize(lambda cell: len(cell.candidates) == 1)(self.grid)
-        return self.grid[mask]
+    def get_singles(self) -> list[Cell]:
+        return [cell for row in self.grid for cell in row if len(cell.candidates) == 1]
+    
+    def hidden_singles_for_group(self, group: list[Cell]) -> list[tuple[Cell, int]]:
+        counts: dict[int, int] = dict()
+        for cell in group:
+            for candidate in cell.candidates:
+                counts[candidate] = counts.get(candidate, 0) + 1
+        
+        hidden_singles = {candidate for candidate, count in counts.items() if count == 1}
+
+        return [
+            (cell, next(iter(cell.candidates & hidden_singles)))
+            for cell in group if cell.candidates & hidden_singles
+        ]
+    
+    def hidden_singles_for_column(self, col: int) -> list[tuple[Cell, int]]:
+        group = self.col_at(col)
+        return self.hidden_singles_for_group(group)
+
+    def hidden_singles_for_row(self, row: int) -> list[tuple[Cell, int]]:
+        group = self.row_at(row)
+        return self.hidden_singles_for_group(group)
+    
+    def hidden_singles_for_box(self, box: int) -> list[tuple[Cell, int]]:
+        group = self.box_at(box)
+        return self.hidden_singles_for_group(group)
+        
