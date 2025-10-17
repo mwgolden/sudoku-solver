@@ -56,9 +56,9 @@ class SudokuPuzzle:
         return [self.grid[r, c] for r in range(r0, r0+3) for c in range(c0, c0+3)]
     
     def excluded_at(self, cell: Cell) -> set[int]:
-        r = set([c.value for c in self.row_at(cell.row) if c.value > 0])
-        c = set([c.value for c in self.col_at(cell.col) if c.value > 0])
-        box = set([c.value for c in self.box_at(cell.box) if c.value > 0])
+        r = set([c.value for c in self.row_at(cell.row) if c.is_solved])
+        c = set([c.value for c in self.col_at(cell.col) if c.is_solved])
+        box = set([c.value for c in self.box_at(cell.box) if c.is_solved])
         to_exclude = r | c | box
         return to_exclude
     
