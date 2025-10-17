@@ -41,6 +41,10 @@ class SudokuPuzzle:
                     cell.set_value(val)
                 self.grid[row, col] = cell
         self.populate_candidates()
+
+    def current_frame(self) -> npt.NDArray[np.int8]:
+        frame = [[col.value for col in row] for row in self.grid]
+        return np.array(frame, dtype=np.int8)
     
     def cell_at(self, row: int, col: int) -> Cell:
         return self.grid[row, col]
