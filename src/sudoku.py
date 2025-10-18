@@ -13,6 +13,17 @@ class LockType(Enum):
 
 @dataclass
 class Cell:
+    """
+    Represents a single cell in a Sudoku grid.
+
+    Attributes:
+        row (int): Row index (0-8).
+        col (int): Column index (0-8).
+        box (int): Box index (0-8).
+        value (int): Current value of the cell (0 if unsolved).
+        candidates (set[int]): Possible candidate values for this cell.
+        eliminated_candidates (set[int]): Candidates removed via solving techniques.
+    """
     row: int
     col: int
     box: int
@@ -22,9 +33,19 @@ class Cell:
 
     @property
     def is_solved(self) -> bool:
+        """Returns True if the cell has a value assigned (i.e., is solved)."""
         return self.value > 0
     
     def eliminate_candidate(self, n: int) -> bool: 
+        """
+        Eliminates a candidate value from this cell.
+
+        Args:
+            n (int): The candidate to remove.
+
+        Returns:
+            bool: True if the candidate was removed, False if it was not present.
+        """
         if n in self.candidates:
             self.candidates.remove(n)
             self.eliminated_candidates.add(n)
@@ -32,13 +53,36 @@ class Cell:
         return False
     
     def set_value(self, n: int):
+        """
+        Sets the value of the cell and clears its candidates.
+
+        Args:
+            n (int): Value to assign to the cell.
+        """
         self.value = n
         self.candidates = set()
 
 class SudokuPuzzle:
+    """
+    Represents a Sudoku puzzle and provides methods to help solve it
+    using logical techniques like finding singles and locked candidates.
+
+    Attributes:
+        grid (np.ndarray): 9x9 array of Cell objects.
+    """
     ALL_VALUES = set(range(1, 10))
 
     def __init__(self, arr: npt.NDArray[np.int8]):
+        """
+        Initializes a Sudoku puzzle from a 9x9 numpy array.
+
+        Args:
+            arr (np.ndarray): 9x9 integer array representing the puzzle
+                              (0 indicates unsolved cells).
+
+        Raises:
+            ValueError: If the input array is not 9x9.
+        """
         if arr.shape != (9, 9):
             raise ValueError("Sudoku grid must be 9x9")
         self.grid = np.empty((9, 9), dtype=object)
@@ -53,23 +97,76 @@ class SudokuPuzzle:
         self.populate_candidates()
 
     def current_frame(self) -> npt.NDArray[np.int8]:
+        """
+        Returns the current numerical state of the puzzle as a 9x9 array.
+
+        Returns:
+            np.ndarray: 9x9 array of integers representing cell values (0 if unsolved).
+        """
         frame = [[col.value for col in row] for row in self.grid]
         return np.array(frame, dtype=np.int8)
     
     def cell_at(self, row: int, col: int) -> Cell:
+        """
+        Returns the Cell object at a specific row and column.
+
+        Args:
+            row (int): Row index (0-8).
+            col (int): Column index (0-8).
+
+        Returns:
+            Cell: The cell at the specified position.
+        """
         return self.grid[row, col]
     
     def row_at(self, row: int) -> list[Cell]:
+        """
+        Returns all cells in a specific row.
+
+        Args:
+            row (int): Row index (0-8).
+
+        Returns:
+            list[Cell]: List of 9 cells in the row.
+        """
         return list(self.grid[row, :])
     
     def col_at(self, col: int) -> list[Cell]:
+        """
+        Returns all cells in a specific column.
+
+        Args:
+            col (int): Column index (0-8).
+
+        Returns:
+            list[Cell]: List of 9 cells in the column.
+        """
         return list(self.grid[:, col])
     
     def box_at(self, box: int) -> list[Cell]:
+        """
+        Returns all cells in a specific 3x3 box.
+
+        Args:
+            box (int): Box index (0-8).
+
+        Returns:
+            list[Cell]: List of 9 cells in the box.
+        """
         r0, c0 = (box // 3) * 3, (box % 3) * 3
         return [self.grid[r, c] for r in range(r0, r0+3) for c in range(c0, c0+3)]
     
     def excluded_at(self, cell: Cell) -> set[int]:
+        """
+        Computes values that cannot appear in a given cell due to Sudoku rules.
+
+        Args:
+            cell (Cell): The cell for which to compute exclusions.
+
+        Returns:
+            set[int]: Set of values already used in the cell's row, column,
+                      box, or previously eliminated from the cell.
+        """
         r = set([c.value for c in self.row_at(cell.row) if c.is_solved])
         c = set([c.value for c in self.col_at(cell.col) if c.is_solved])
         box = set([c.value for c in self.box_at(cell.box) if c.is_solved])
@@ -77,22 +174,54 @@ class SudokuPuzzle:
         return to_exclude
     
     def set_candidates(self, cell: Cell):
+        """
+        Updates the candidate set for a single cell based on current exclusions.
+
+        Args:
+            cell (Cell): The cell to update.
+        """
         if cell.value == 0:
             exclusions = self.excluded_at(cell)
             cell.candidates = self.ALL_VALUES - exclusions
     
     def populate_candidates(self):
+        """Populates candidates for all cells in the puzzle."""
         for row in self.grid:
             for cell in row:
                 self.set_candidates(cell)
     
     def is_solved(self) -> bool:
+        """
+        Checks if the puzzle is completely solved.
+
+        Returns:
+            bool: True if all cells have a value assigned.
+        """
         return all(cell.is_solved for row in self.grid for cell in row)
 
     def get_singles(self) -> list[Cell]:
+        """
+        Returns all cells that have only one remaining candidate.
+
+        Returns:
+            list[Cell]: List of cells that can be solved immediately.
+        """
         return [cell for row in self.grid for cell in row if len(cell.candidates) == 1]
     
     def hidden_singles_for_group(self, group: list[Cell]) -> list[tuple[Cell, int]]:
+        """
+        Identifies hidden singles in a group of cells (row, column, or box).
+
+        A hidden single is a candidate that appears only once among the candidates
+        of all cells in the group.
+
+        Args:
+            group (list[Cell]): List of cells in the group.
+
+        Returns:
+            list[tuple[Cell, int]]: List of tuples (cell, candidate) where
+                                     candidate is a hidden single in that cell.
+        """
         counts: dict[int, int] = dict()
         for cell in group:
             for candidate in cell.candidates:
@@ -106,26 +235,57 @@ class SudokuPuzzle:
         ]
     
     def hidden_singles_for_column(self, col: int) -> list[tuple[Cell, int]]:
+        """
+        Identifies hidden singles in a specific column.
+
+        Args:
+            col (int): Column index (0-8).
+
+        Returns:
+            list[tuple[Cell, int]]: List of hidden singles in the column.
+        """
         group = self.col_at(col)
         return self.hidden_singles_for_group(group)
 
     def hidden_singles_for_row(self, row: int) -> list[tuple[Cell, int]]:
+        """
+        Identifies hidden singles in a specific row.
+
+        Args:
+            row (int): Row index (0-8).
+
+        Returns:
+            list[tuple[Cell, int]]: List of hidden singles in the row.
+        """
         group = self.row_at(row)
         return self.hidden_singles_for_group(group)
     
     def hidden_singles_for_box(self, box: int) -> list[tuple[Cell, int]]:
+        """
+        Identifies hidden singles in a specific box.
+
+        Args:
+            box (int): Box index (0-8).
+
+        Returns:
+            list[tuple[Cell, int]]: List of hidden singles in the box.
+        """
         group = self.box_at(box)
         return self.hidden_singles_for_group(group)
     
     def locked_candidates_for_box(self, box: int): 
         """
-            Identify candidates confined to a single row or column inside a box.
-            Elimination happens outside the box for a row or column, i.e. the 
-            candidate can be eliminated from other cells in the same row or 
-            column outside the given box.
+        Identifies candidates confined to a single row or column inside a box (pointing).
 
-            Returns a list of tuples describing box-row or box-column locks:
-            (box, row_or_col, candidate, "row_lock" | "col_lock")
+        Candidates restricted to a row/column within a box can be eliminated
+        from other cells in that row/column outside the box.
+
+        Args:
+            box (int): Box index (0-8).
+
+        Returns:
+            list[tuple[int, int, int, LockType]]: Tuples describing locked candidates:
+                (box, row_or_col, candidate, LockType.ROW_LOCK | LockType.COL_LOCK)
         """
         cells = self.box_at(box)
         all_candidates = set()
@@ -148,13 +308,17 @@ class SudokuPuzzle:
     
     def locked_candidates_for_column(self, col: int):
         """
-            Identify candidates in a column confined to a single box.
-            Elimination happens inside the box for a column, i.e. the 
-            candidate can be eliminated from other cells in the same 
-            column within the same box. 
+        Identifies candidates in a column confined to a single box (claiming).
 
-            Returns a list of tuples describing box-column locks:
-            (box, col, candidate, "box_col_lock")
+        Candidates restricted to a box within a column can be eliminated from
+        other cells in that box.
+
+        Args:
+            col (int): Column index (0-8).
+
+        Returns:
+            list[tuple[int, int, int, LockType]]: Tuples describing locked candidates:
+                (box, col, candidate, LockType.BOX_COL_LOCK)
         """
         cells = self.col_at(col)
         all_candidates = set()
@@ -176,14 +340,17 @@ class SudokuPuzzle:
     
     def locked_candidates_for_row(self, row: int):
         """
-            Identify candidates in a row confined to a single box.
-            Elimination happens outside the box for a row, i.e. the 
-            candidate can be eliminated from other cells in the same 
-            row within the same box. 
+        Identifies candidates in a row confined to a single box (claiming).
 
+        Candidates restricted to a box within a row can be eliminated from
+        other cells in that box.
 
-            Returns a list of tuples describing box-column locks:
-            (box, row, candidate, "box_row_lock")
+        Args:
+            row (int): Row index (0-8).
+
+        Returns:
+            list[tuple[int, int, int, LockType]]: Tuples describing locked candidates:
+                (box, row, candidate, LockType.BOX_ROW_LOCK)
         """
         cells = self.row_at(row)
         all_candidates = set()
