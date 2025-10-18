@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 class LockType(Enum):
+    """Enumeration of locked candidate types used in Sudoku solving."""
     ROW_LOCK = 1
     COL_LOCK = 2
     BOX_ROW_LOCK = 3
@@ -45,6 +46,10 @@ class Cell:
 
         Returns:
             bool: True if the candidate was removed, False if it was not present.
+
+        Side Effects:
+            - Adds the eliminated candidate to `eliminated_candidates`.
+            - Does nothing if the candidate was already removed or cell is solved.
         """
         if n in self.candidates:
             self.candidates.remove(n)
@@ -58,6 +63,10 @@ class Cell:
 
         Args:
             n (int): Value to assign to the cell.
+
+        Side Effects:
+            - Clears all remaining candidates.
+            - Does not propagate updates to other cells (caller must handle that).
         """
         self.value = n
         self.candidates = set()
