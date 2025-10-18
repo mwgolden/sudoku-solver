@@ -3,6 +3,14 @@ import numpy as np
 
 from dataclasses import dataclass, field
 
+from enum import Enum
+
+class LockType(Enum):
+    ROW_LOCK = 1
+    COL_LOCK = 2
+    BOX_ROW_LOCK = 3
+    BOX_COL_LOCK = 4
+
 @dataclass
 class Cell:
     row: int
@@ -65,7 +73,7 @@ class SudokuPuzzle:
         r = set([c.value for c in self.row_at(cell.row) if c.is_solved])
         c = set([c.value for c in self.col_at(cell.col) if c.is_solved])
         box = set([c.value for c in self.box_at(cell.box) if c.is_solved])
-        to_exclude = (r | c | box) - cell.eliminated_candidates
+        to_exclude = r | c | box | cell.eliminated_candidates
         return to_exclude
     
     def set_candidates(self, cell: Cell):
@@ -131,9 +139,9 @@ class SudokuPuzzle:
             rows = {cell.row for cell in cells_with_candidate}
             cols = {cell.col for cell in cells_with_candidate}
             if len(rows) == 1: #candidate is locked to row
-                locked_candidates.append((box, next(iter(rows)), candidate, "row_lock"))
+                locked_candidates.append((box, next(iter(rows)), candidate, LockType.ROW_LOCK))
             if len(cols) == 1: # candidate is locked to column
-                locked_candidates.append((box, next(iter(cols)), candidate, "col_lock"))
+                locked_candidates.append((box, next(iter(cols)), candidate, LockType.COL_LOCK))
 
 
         return locked_candidates
@@ -162,7 +170,7 @@ class SudokuPuzzle:
             # find which boxes these cells belong to
             boxes = {cell.box for cell in cells_with_candidate}
             if len(boxes) == 1: 
-                locked_candidates.append((next(iter(boxes)), col, candidate, "box_col_lock"))
+                locked_candidates.append((next(iter(boxes)), col, candidate, LockType.BOX_COL_LOCK))
         
         return locked_candidates
     
@@ -191,7 +199,7 @@ class SudokuPuzzle:
             # find which boxes these cells belong to
             boxes = {cell.box for cell in cells_with_candidate}
             if len(boxes) == 1: 
-                locked_candidates.append((next(iter(boxes)), row, candidate, "box_row_lock"))
+                locked_candidates.append((next(iter(boxes)), row, candidate, LockType.BOX_ROW_LOCK))
         
         return locked_candidates
         
