@@ -8,7 +8,8 @@ logging.basicConfig(
     format="%(message)s"
 )
 
-def log_step(step_description, puzzle):
+def log_step(step_description, puzzle=None):
     logging.info(step_description)
-    logging.info(puzzle)
+    if puzzle:
+        logging.info(puzzle)
     logging.info("\n" + "-"*40 + "\n")
