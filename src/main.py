@@ -29,19 +29,8 @@ def main():
     np_puzzle = convert_to_np_array(puzzle)
     sudoku_puzzle = SudokuPuzzle(np_puzzle)
     sudoku_solver = SudokuSolver(sudoku_puzzle)
-
-    #print(sudoku_puzzle.box_at(8))
-    #print(sudoku_puzzle.hidden_singles_for_box(8))
-
     sudoku_solver.solve()
-    #print(np_puzzle)
-    #print(sudoku_puzzle.current_frame())
-    #print(sudoku_puzzle.locked_candidates_for_box(0))
-    #print(sudoku_puzzle.box_at(0))
-    #pprint(sudoku_puzzle.locked_candidates_for_box(1))
-    #pprint(sudoku_puzzle.locked_candidates_for_column(1))
-    #pprint(sudoku_puzzle.locked_candidates_for_row(1))
-    
+
 
 if __name__ == "__main__":
     main()

@@ -66,10 +66,12 @@ class Cell:
 
         Side Effects:
             - Clears all remaining candidates.
+            - Clears all eliminated candidates
             - Does not propagate updates to other cells (caller must handle that).
         """
         self.value = n
         self.candidates = set()
+        self.eliminated_candidates = set()
 
 class SudokuPuzzle:
     """
@@ -378,4 +380,56 @@ class SudokuPuzzle:
                 locked_candidates.append((next(iter(boxes)), row, candidate, LockType.BOX_ROW_LOCK))
         
         return locked_candidates
+    
+    def __str__(self) -> str:
+        def cell_str(cell: Cell) -> list[str]:
+            """Return 4 lines representing cell contents"""
+            if cell.is_solved:
+                val = str(cell.value)
+                return [f" {val} ", "", "", "" ]  
+            
+            str_candidates = ",".join([str(val) for val in sorted(list(cell.candidates))])
+            str_eliminated = ",".join([str(val) for val in sorted(list(cell.eliminated_candidates))])
+            return ["   ", str_candidates, str_eliminated, f"({cell.row}, {cell.col})" ]  
+        
+
+        unsolved_str = "Cell:{coord}; Candidates: {candidates}; Eliminated: {eliminated}"
+        # Unicode Box drawing characters
+        V = "│"
+        PV = "║"
+        BH = "═"*3 
+        H3 = "─"*3
+        ROW_DIV = f"   ╟{H3}┼{H3}┼{H3}╫{H3}┼{H3}┼{H3}╫{H3}┼{H3}┼{H3}╢"
+        BOX_DIV = f"   ╠{BH}╪{BH}╪{BH}╬{BH}╪{BH}╪{BH}╬{BH}╪{BH}╪{BH}╣"
+        TC =  f"     0   1   2   3   4   5   6   7   8 "
+        TOP = f"   ╔{BH}╤{BH}╤{BH}╦{BH}╤{BH}╤{BH}╦{BH}╤{BH}╤{BH}╗"
+        BOT = f"   ╚{BH}╧{BH}╧{BH}╩{BH}╧{BH}╧{BH}╩{BH}╧{BH}╧{BH}╝" 
+
+        # Draw grid
+        lines_out = [TC]
+        lines_out += [TOP]
+        unsolved_details = []
+        for i, row in enumerate(self.grid):
+            cell_strs = [cell_str(cell) for cell in row]
+            line = f"{ i }  ║"
+            for j, cell in enumerate(cell_strs):
+                if len(cell[0].strip()) == 0:
+                    unsolved_details.append(unsolved_str.format(coord=cell[3], candidates=cell[1], eliminated=cell[2]))
+                line += f"{cell[0]}"
+                if j % 3 == 2:
+                    line += PV
+                else:
+                    line += V
+            lines_out += [line]
+            if i == 8:
+                lines_out += [BOT]
+            elif i % 3 == 2:
+                lines_out += [BOX_DIV]
+            else:
+                lines_out += [ROW_DIV]
+
+        lines_out += ["\n\n"]
+        lines_out += unsolved_details
+        return "\n".join(lines_out)
+
         

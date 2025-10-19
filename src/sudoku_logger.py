@@ -10,6 +10,5 @@ logging.basicConfig(
 
 def log_step(step_description, puzzle):
     logging.info(step_description)
-    logging.info(pformat(puzzle.current_frame()))
-    logging.info(pformat(puzzle.grid))
+    logging.info(puzzle)
     logging.info("\n" + "-"*40 + "\n")
