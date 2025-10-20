@@ -24,7 +24,7 @@ def main():
     project_root = Path(__file__).resolve().parent.parent
     puzzle_path = project_root / "puzzles"
     #sudoku01 = puzzle_path / "sudoku01.txt"
-    sudoku01 = puzzle_path / "hard-sudoku02.txt"
+    sudoku01 = puzzle_path / "hard-sudoku03.txt" # hard-sudoku03.txt cannot be solved with singles and locked singles alone
     puzzle = read_file(sudoku01)
     np_puzzle = convert_to_np_array(puzzle)
     sudoku_puzzle = SudokuPuzzle(np_puzzle)
