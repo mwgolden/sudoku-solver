@@ -107,6 +107,40 @@ class SudokuPuzzle:
                 self.grid[row, col] = cell
         self.populate_candidates()
 
+    def is_solved(self) -> bool:
+        """
+        Returns a boolean value indicating whether all cells in the sudoku grid are solved.
+
+        Returns:
+            bool: True if all cells are solved, otherwise false
+        """
+        for row in self.grid:
+            for cell in row:
+                if not cell.is_solved:
+                    return False
+        return True
+    
+    def has_valid_solution(self) -> bool:
+        """
+        Returns a boolean value if all cells in the sodoku grid are solved and the solution is valid, 
+        i.e. numbers 1 - 9 do not repeat for a given row, column or box. 
+
+        Returns:
+            bool: True if the grid has a valid solution, otherwise false
+        """
+        if not self.is_solved():
+            return False
+        
+        for row in self.grid:
+            for cell in row:
+                r = {item.value for item in self.row_at(cell.row) if item != cell}
+                c = {item.value for item in self.col_at(cell.col) if item != cell}
+                b = {item.value for item in self.box_at(cell.box) if item != cell}
+                if cell.value in r | b | c:
+                    return False 
+        
+        return True
+
     def current_frame(self) -> npt.NDArray[np.int8]:
         """
         Returns the current numerical state of the puzzle as a 9x9 array.

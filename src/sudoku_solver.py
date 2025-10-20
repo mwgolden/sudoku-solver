@@ -81,5 +81,7 @@ class SudokuSolver:
             self.eliminate_locked_candidates()
             log_step("Eliminations Completed", self.puzzle)
         log_step("End", self.puzzle)
+        log_step(f"The puzzle is {'solved' if self.puzzle.is_solved() else 'not solved'}")
+        log_step(f"The puzzle solution is {'valid' if self.puzzle.has_valid_solution() else 'invalid'}")
 
     
