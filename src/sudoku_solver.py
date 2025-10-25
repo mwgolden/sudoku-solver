@@ -13,31 +13,16 @@ class SudokuSolver:
         for cell in singles:
             cell.set_value(next(iter(cell.candidates)))     
             log_step(f"Solve Cell({cell.row}, {cell.col}) with single; Solution: {cell.value}")        
-            self.eliminate_candidates_for_row(cell.row, cell.value)
-            self.eliminate_candidates_for_col(cell.col, cell.value)
-            self.eliminate_candidates_for_box(cell.box, cell.value)
+            self.eliminate_candidate_for_group(cell.row, cell.value, GroupType.ROW)
+            self.eliminate_candidate_for_group(cell.col, cell.value, GroupType.COL)
+            self.eliminate_candidate_for_group(cell.box, cell.value, GroupType.BOX)
         return len(singles) > 0
 
-
-    def eliminate_candidates_for_row(self, r: int, candidate: int):
-        row = self.puzzle.row_at(r)
-        for cell in row:
-            if candidate in cell.candidates:
-                cell.eliminate_candidate(candidate)  
-                log_step(f"Cell ({cell.row}, {cell.col}): Eliminate candidate '{candidate}'")
-
-    def eliminate_candidates_for_col(self, c: int, candidate: int):
-        col = self.puzzle.col_at(c)
-        for cell in col:
+    def eliminate_candidate_for_group(self, r: int, candidate: int, group_type: GroupType):
+        group = self.group_for_loc(r, group_type)
+        for cell in group:
             if candidate in cell.candidates:
                 cell.eliminate_candidate(candidate)
-                log_step(f"Cell ({cell.row}, {cell.col}): Eliminate candidate '{candidate}'")  
-
-    def eliminate_candidates_for_box(self, b: int, candidate: int):
-        box = self.puzzle.box_at(b)
-        for cell in box:
-            if candidate in cell.candidates:
-                cell.eliminate_candidate(candidate)  
                 log_step(f"Cell ({cell.row}, {cell.col}): Eliminate candidate '{candidate}'")
 
     def eliminate_locked_candidates(self) -> bool:
@@ -80,8 +65,17 @@ class SudokuSolver:
                     log_step(f"'{candidate}' is locked to column {row_or_col}. Eliminate candidate '{candidate}' from Cell({cell.row}, {cell.col})")
 
         return changes
+    
+    def group_for_loc(self, n: int, group_type: GroupType) -> list[Cell]:
+        if group_type == GroupType.ROW:
+            return self.puzzle.row_at(n)
+        if group_type == GroupType.COL:
+            return self.puzzle.col_at(n)
+        if group_type == GroupType.BOX:
+            return self.puzzle.box_at(n)
 
-    def group_for_cell(self, cell, group_type) -> list[Cell]:
+
+    def group_for_cell(self, cell: Cell, group_type: GroupType) -> list[Cell]:
         if group_type == GroupType.ROW:
             return self.puzzle.row_at(cell.row)
         if group_type == GroupType.COL:
