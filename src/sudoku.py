@@ -3,14 +3,7 @@ import numpy as np
 
 from dataclasses import dataclass, field
 
-from enum import Enum
-
-class LockType(Enum):
-    """Enumeration of locked candidate types used in Sudoku solving."""
-    ROW_LOCK = 1
-    COL_LOCK = 2
-    BOX_ROW_LOCK = 3
-    BOX_COL_LOCK = 4
+from enums import LockType
 
 @dataclass
 class Cell:
@@ -56,6 +49,28 @@ class Cell:
             self.eliminated_candidates.add(n)
             return True
         return False
+    
+    def eliminate_candidates(self, s: set[int]) -> bool: 
+        """
+        Eliminates all candidate values in a set from this cell.
+
+        Args:
+            s (set[int]): Set of candidates to remove.
+
+        Returns:
+            bool: True if any candidate was removed, False if none were present.
+
+        Side Effects:
+            - Adds the eliminated candidates to `eliminated_candidates`.
+            - Does nothing if the candidates were already removed or cell is solved.
+        """
+        has_eliminations = False
+        for n in s:
+            if n in self.candidates:
+                self.candidates.remove(n)
+                self.eliminated_candidates.add(n)
+                has_eliminations =  True
+        return has_eliminations
     
     def set_value(self, n: int):
         """
@@ -138,7 +153,7 @@ class SudokuPuzzle:
                 b = {item.value for item in self.box_at(cell.box) if item != cell}
                 if cell.value in r | b | c:
                     return False 
-        
+
         return True
 
     def current_frame(self) -> npt.NDArray[np.int8]:
@@ -344,9 +359,9 @@ class SudokuPuzzle:
             rows = {cell.row for cell in cells_with_candidate}
             cols = {cell.col for cell in cells_with_candidate}
             if len(rows) == 1: #candidate is locked to row
-                locked_candidates.append((box, next(iter(rows)), candidate, LockType.ROW_LOCK))
+                locked_candidates.append((box, next(iter(rows)), candidate, LockType.BOX_ROW_LOCK))
             if len(cols) == 1: # candidate is locked to column
-                locked_candidates.append((box, next(iter(cols)), candidate, LockType.COL_LOCK))
+                locked_candidates.append((box, next(iter(cols)), candidate, LockType.BOX_COL_LOCK))
 
 
         return locked_candidates
@@ -379,7 +394,7 @@ class SudokuPuzzle:
             # find which boxes these cells belong to
             boxes = {cell.box for cell in cells_with_candidate}
             if len(boxes) == 1: 
-                locked_candidates.append((next(iter(boxes)), col, candidate, LockType.BOX_COL_LOCK))
+                locked_candidates.append((next(iter(boxes)), col, candidate, LockType.COL_LOCK))
         
         return locked_candidates
     
@@ -411,10 +426,48 @@ class SudokuPuzzle:
             # find which boxes these cells belong to
             boxes = {cell.box for cell in cells_with_candidate}
             if len(boxes) == 1: 
-                locked_candidates.append((next(iter(boxes)), row, candidate, LockType.BOX_ROW_LOCK))
+                locked_candidates.append((next(iter(boxes)), row, candidate, LockType.ROW_LOCK))
         
         return locked_candidates
     
+    def naked_pairs_for_group(self, group: list[Cell]) -> list[tuple[Cell, Cell]]:
+        """
+        Identifies naked pairs in a row, column or box. 
+
+        Candidates in a naked pair can be eliminated from other cells in the group. 
+
+        Args:
+            group list[Cell]:  group of cells from row, column or box
+
+        Returns:
+            list[tuple[Cell, Cell]]: Tuples of cells for each naked pair found in group
+        """
+        pairs = [cell for cell in group if len(cell.candidates) == 2]
+        counts = dict()
+        for cell in pairs:
+            counts[tuple(sorted(cell.candidates))] = counts.get(tuple(sorted(cell.candidates)), 0) + 1
+
+        valid_pairs = [set(candidates) for candidates, count in counts.items() if count == 2]
+
+        naked_pairs = [
+            tuple(c for c in group if c.candidates == p)
+            for p in valid_pairs
+        ]
+
+        return naked_pairs
+
+    def naked_pairs_for_row(self, row: int):
+        group = self.row_at(row)
+        return self.naked_pairs_for_group(group)
+    
+    def naked_pairs_for_col(self, col: int):
+        group = self.col_at(col)
+        return self.naked_pairs_for_group(group)
+    
+    def naked_pairs_for_box(self, box: int):
+        group = self.box_at(box)
+        return self.naked_pairs_for_group(group)
+
     def __str__(self) -> str:
         def cell_str(cell: Cell) -> list[str]:
             """Return 4 lines representing cell contents"""
