@@ -3,7 +3,7 @@ import numpy as np
 
 from dataclasses import dataclass, field
 
-from enums import LockType
+from enums import LockType, GroupType
 
 @dataclass
 class Cell:
@@ -430,7 +430,7 @@ class SudokuPuzzle:
         
         return locked_candidates
     
-    def naked_pairs_for_group(self, group: list[Cell]) -> list[tuple[Cell, Cell]]:
+    def find_naked_pairs_for_group(self, group: list[Cell]) -> list[tuple[Cell, Cell]]:
         """
         Identifies naked pairs in a row, column or box. 
 
@@ -455,18 +455,39 @@ class SudokuPuzzle:
         ]
 
         return naked_pairs
+    
+    def group_for_loc(self, loc: int, group_type: GroupType) -> list[Cell]:
+        if group_type == GroupType.ROW:
+            return self.row_at(loc)
+        elif group_type == GroupType.COL:
+            return self.col_at(loc)
+        elif group_type == GroupType.BOX:
+            return self.box_at(loc)
+        else:
+            raise ValueError(f"Invalid group_type: {group_type}")
 
-    def naked_pairs_for_row(self, row: int):
-        group = self.row_at(row)
-        return self.naked_pairs_for_group(group)
-    
-    def naked_pairs_for_col(self, col: int):
-        group = self.col_at(col)
-        return self.naked_pairs_for_group(group)
-    
-    def naked_pairs_for_box(self, box: int):
-        group = self.box_at(box)
-        return self.naked_pairs_for_group(group)
+
+    def group_for_cell(self, cell: Cell, group_type: GroupType) -> list[Cell]:
+        if group_type == GroupType.ROW:
+            return self.row_at(cell.row)
+        elif group_type == GroupType.COL:
+            return self.col_at(cell.col)
+        elif group_type == GroupType.BOX:
+            return self.box_at(cell.box)
+        else:
+            raise ValueError(f"Invalid group_type: {group_type}")
+        
+    def naked_pairs_for_group(self, group_type: GroupType, loc: int):
+        if group_type == GroupType.ROW:
+            group = self.group_for_loc(loc, group_type)
+        elif group_type == GroupType.COL:
+            group = self.group_for_loc(loc, group_type)
+        elif group_type == GroupType.BOX:
+            group = self.group_for_loc(loc, group_type)
+        else:
+            raise ValueError(f"Invalid group_type: {group_type}")
+        
+        return self.find_naked_pairs_for_group(group)
 
     def __str__(self) -> str:
         def cell_str(cell: Cell) -> list[str]:

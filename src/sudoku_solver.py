@@ -19,7 +19,7 @@ class SudokuSolver:
         return len(singles) > 0
 
     def eliminate_candidate_for_group(self, r: int, candidate: int, group_type: GroupType):
-        group = self.group_for_loc(r, group_type)
+        group = self.puzzle.group_for_loc(r, group_type)
         for cell in group:
             if candidate in cell.candidates:
                 cell.eliminate_candidate(candidate)
@@ -65,31 +65,6 @@ class SudokuSolver:
                     log_step(f"'{candidate}' is locked to column {row_or_col}. Eliminate candidate '{candidate}' from Cell({cell.row}, {cell.col})")
 
         return changes
-    
-    def group_for_loc(self, n: int, group_type: GroupType) -> list[Cell]:
-        if group_type == GroupType.ROW:
-            return self.puzzle.row_at(n)
-        if group_type == GroupType.COL:
-            return self.puzzle.col_at(n)
-        if group_type == GroupType.BOX:
-            return self.puzzle.box_at(n)
-
-
-    def group_for_cell(self, cell: Cell, group_type: GroupType) -> list[Cell]:
-        if group_type == GroupType.ROW:
-            return self.puzzle.row_at(cell.row)
-        if group_type == GroupType.COL:
-            return self.puzzle.col_at(cell.col)
-        if group_type == GroupType.BOX:
-            return self.puzzle.box_at(cell.box)
-        
-    def naked_pairs_for_group(self, group_type, n):
-        if group_type == GroupType.ROW:
-            return self.puzzle.naked_pairs_for_row(n)
-        if group_type == GroupType.COL:
-            return self.puzzle.naked_pairs_for_col(n)
-        if group_type == GroupType.BOX:
-            return self.puzzle.naked_pairs_for_box(n)
         
     def eliminate_candidates_from_group(self, eliminations: tuple[GroupType, list[Cell], list[Cell], set[int]]) -> bool:
         changed = False
@@ -109,12 +84,12 @@ class SudokuSolver:
         naked_pairs = defaultdict(list)
         for i in range(9):
             for group_type in group_types:
-                naked_pairs[group_type] += self.naked_pairs_for_group(group_type, i)
+                naked_pairs[group_type] += self.puzzle.naked_pairs_for_group(group_type, i)
 
         changed = False
         for group_type, pairs in naked_pairs.items():
             for cell1, cell2 in pairs:
-                group = self.group_for_cell(cell1, group_type)
+                group = self.puzzle.group_for_cell(cell1, group_type)
                 has_change = self.eliminate_candidates_from_group((group_type, [cell1, cell2], group, cell1.candidates))
                 changed = changed or has_change
         return changed
