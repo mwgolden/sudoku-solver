@@ -39,19 +39,6 @@ class SudokuPuzzle:
                 self.grid[row, col] = cell
         self.populate_candidates()
 
-    def is_solved(self) -> bool:
-        """
-        Returns a boolean value indicating whether all cells in the sudoku grid are solved.
-
-        Returns:
-            bool: True if all cells are solved, otherwise false
-        """
-        for row in self.grid:
-            for cell in row:
-                if not cell.is_solved:
-                    return False
-        return True
-    
     def has_valid_solution(self) -> bool:
         """
         Returns a boolean value if all cells in the sodoku grid are solved and the solution is valid, 
