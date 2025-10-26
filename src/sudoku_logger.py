@@ -1,5 +1,4 @@
 import logging
-from pprint import pformat
 
 logging.basicConfig(
     filename="sudoku_steps.log",

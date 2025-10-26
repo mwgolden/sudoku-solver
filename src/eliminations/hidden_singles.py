@@ -1,6 +1,5 @@
-from collections import defaultdict
-
-from sudoku import SudokuPuzzle, Cell
+from sudoku import SudokuPuzzle
+from sudoku_cell import Cell
 from sudoku_logger import log_step
 
 
