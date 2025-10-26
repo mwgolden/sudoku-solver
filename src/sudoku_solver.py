@@ -3,6 +3,7 @@ from sudoku_logger import log_step
 from enums import GroupType
 from eliminations.naked_pairs import eliminate_naked_pairs
 from eliminations.locked_candidates import eliminate_locked_candidates
+from eliminations.hidden_singles import eliminate_hidden_singles
 from eliminations.utils import eliminate_candidate_for_group
 
 class SudokuSolver:
@@ -31,8 +32,11 @@ class SudokuSolver:
             
             log_step("Eliminate Naked Pairs")
             eliminated_naked_pairs = eliminate_naked_pairs(self.puzzle)
-            changed = solved_singles or eliminated_locked_candidates or eliminated_naked_pairs
 
+            log_step("Eliminate Hidden Singles")
+            eliminated_hidden_singles = eliminate_hidden_singles(self.puzzle)
+
+            changed = solved_singles or eliminated_locked_candidates or eliminated_naked_pairs or eliminated_hidden_singles
             log_step("Current State", self.puzzle)
 
         log_step("End", self.puzzle)

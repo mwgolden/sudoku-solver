@@ -3,6 +3,29 @@ from collections import defaultdict
 from sudoku import SudokuPuzzle, Cell
 from sudoku_logger import log_step
 
+
+def eliminate_hidden_singles(puzzle: SudokuPuzzle):
+    """
+    Eliminates hidden singles from a row, column or box.
+    """
+    hidden_singles = []
+    for i in range(9):
+         hidden_singles += hidden_singles_for_row(puzzle, i)
+         hidden_singles += hidden_singles_for_column(puzzle, i)
+         hidden_singles += hidden_singles_for_box(puzzle, i)
+
+    changed = False
+    if hidden_singles:
+         for cell, candidate in hidden_singles:
+            to_keep = set()
+            to_keep.add(candidate)
+            if to_keep != cell.candidates:
+                to_eliminate = cell.candidates - to_keep
+                log_step(f"Hidden Single {candidate}: Eliminate candidates {to_eliminate} from Cell({cell.row}, {cell.col}){{{cell.candidates}}}")
+                changed = cell.eliminate_candidates(to_eliminate)
+
+    return changed
+
 def hidden_singles_for_group(group: list[Cell]) -> list[tuple[Cell, int]]:
         """
         Identifies hidden singles in a group of cells (row, column, or box).
