@@ -10,7 +10,7 @@ def eliminate_naked_pairs(puzzle: SudokuPuzzle) -> bool:
     naked_pairs = defaultdict(list)
     for i in range(9):
         for group_type in group_types:
-            naked_pairs[group_type] += puzzle.naked_pairs_for_group(group_type, i)
+            naked_pairs[group_type] += naked_pairs_for_group(puzzle, group_type, i)
     changed = False
     for group_type, pairs in naked_pairs.items():
         for cell1, cell2 in pairs:
@@ -30,3 +30,42 @@ def eliminate_candidates_from_group( eliminations: tuple[GroupType, list[Cell], 
                     cell.eliminate_candidates(candidates)
                     changed = True
         return changed
+
+
+def find_naked_pairs_for_group(group: list[Cell]) -> list[tuple[Cell, Cell]]:
+        """
+        Identifies naked pairs in a row, column or box. 
+
+        Candidates in a naked pair can be eliminated from other cells in the group. 
+
+        Args:
+            group list[Cell]:  group of cells from row, column or box
+
+        Returns:
+            list[tuple[Cell, Cell]]: Tuples of cells for each naked pair found in group
+        """
+        pairs = [cell for cell in group if len(cell.candidates) == 2]
+        counts = dict()
+        for cell in pairs:
+            counts[tuple(sorted(cell.candidates))] = counts.get(tuple(sorted(cell.candidates)), 0) + 1
+
+        valid_pairs = [set(candidates) for candidates, count in counts.items() if count == 2]
+
+        naked_pairs = [
+            tuple(c for c in group if c.candidates == p)
+            for p in valid_pairs
+        ]
+
+        return naked_pairs
+
+def naked_pairs_for_group(puzzle, group_type: GroupType, loc: int):
+        if group_type == GroupType.ROW:
+            group = puzzle.group_for_loc(loc, group_type)
+        elif group_type == GroupType.COL:
+            group = puzzle.group_for_loc(loc, group_type)
+        elif group_type == GroupType.BOX:
+            group = puzzle.group_for_loc(loc, group_type)
+        else:
+            raise ValueError(f"Invalid group_type: {group_type}")
+        
+        return find_naked_pairs_for_group(group)
