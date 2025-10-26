@@ -1,7 +1,6 @@
 from sudoku import SudokuPuzzle
 from sudoku_logger import log_step
-from pprint import pprint
-from enums import GroupType, LockType
+from enums import GroupType
 from eliminations.naked_pairs import eliminate_naked_pairs
 from eliminations.locked_candidates import eliminate_locked_candidates
 from eliminations.utils import eliminate_candidate_for_group
