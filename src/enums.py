@@ -14,3 +14,9 @@ class LockType(Enum):
     COL_LOCK = 2
     BOX_ROW_LOCK = 3
     BOX_COL_LOCK = 4
+
+class NakedSubsetType(Enum):
+    """Enumeration of naked subset types used in Sudoku solving."""
+    PAIR = 1
+    TRIPLE = 2
+    QUAD = 3

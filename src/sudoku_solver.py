@@ -1,9 +1,9 @@
 from sudoku import SudokuPuzzle
 from sudoku_logger import log_step
 from enums import GroupType
-from eliminations.naked_pairs import eliminate_naked_pairs
 from eliminations.locked_candidates import eliminate_locked_candidates
 from eliminations.hidden_singles import eliminate_hidden_singles
+from eliminations.naked_subsets import eliminate_naked_pairs, eliminate_naked_triples, eliminate_naked_quads
 from eliminations.utils import eliminate_candidate_for_group
 
 class SudokuSolver:
@@ -24,19 +24,26 @@ class SudokuSolver:
         log_step("Begin", self.puzzle)
         changed = True
         while changed:
-            log_step("Resolve Singles")
+            log_step("Find and Resolve Singles")
             solved_singles = self.solve_singles()
+
+            log_step("Find and Eliminate Hidden Singles")
+            eliminated_hidden_singles = eliminate_hidden_singles(self.puzzle)
             
-            log_step("Eliminate Locked Candidates")
+            log_step("Find and Eliminate Locked Candidates")
             eliminated_locked_candidates = eliminate_locked_candidates(self.puzzle)
             
-            log_step("Eliminate Naked Pairs")
+            log_step("Find and Eliminate Naked Pairs")
             eliminated_naked_pairs = eliminate_naked_pairs(self.puzzle)
 
-            log_step("Eliminate Hidden Singles")
-            eliminated_hidden_singles = eliminate_hidden_singles(self.puzzle)
+            log_step("Find and Eliminate Naked Triples")
+            eliminated_naked_triples = eliminate_naked_triples(self.puzzle)
 
-            changed = solved_singles or eliminated_locked_candidates or eliminated_naked_pairs or eliminated_hidden_singles
+            log_step("Find and Eliminate Naked Quads")
+            eliminated_naked_quads = eliminate_naked_quads(self.puzzle)
+            
+
+            changed = solved_singles or eliminated_locked_candidates or eliminated_hidden_singles or eliminated_naked_pairs or eliminated_naked_triples or eliminated_naked_quads
             log_step("Current State", self.puzzle)
 
         log_step("End", self.puzzle)
