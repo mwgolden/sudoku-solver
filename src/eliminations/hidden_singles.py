@@ -1,27 +1,30 @@
 from sudoku import SudokuPuzzle
 from sudoku_cell import Cell
 from sudoku_logger import log_step
+from enums import GroupType
 
 
 def eliminate_hidden_singles(puzzle: SudokuPuzzle):
     """
     Eliminates hidden singles from a row, column or box.
     """
+    group_types = [GroupType.ROW, GroupType.COL, GroupType.BOX]
     hidden_singles = []
     for i in range(9):
-         hidden_singles += hidden_singles_for_row(puzzle, i)
-         hidden_singles += hidden_singles_for_column(puzzle, i)
-         hidden_singles += hidden_singles_for_box(puzzle, i)
+         for group_type in group_types:
+            group = puzzle.group_for_loc(i, group_type)
+            hidden_singles += hidden_singles_for_group(group)
+
+    if not hidden_singles:
+        return False
 
     changed = False
-    if hidden_singles:
-         for cell, candidate in hidden_singles:
-            to_keep = set()
-            to_keep.add(candidate)
-            if to_keep != cell.candidates:
-                to_eliminate = cell.candidates - to_keep
-                log_step(f"Hidden Single {candidate}: Eliminate candidates {to_eliminate} from Cell({cell.row}, {cell.col}){{{cell.candidates}}}")
-                changed = cell.eliminate_candidates(to_eliminate)
+    for cell, candidate in hidden_singles:
+        to_keep = {candidate}
+        if to_keep != cell.candidates:
+            to_eliminate = cell.candidates - to_keep
+            log_step(f"Hidden Single {candidate}: Eliminate candidates {to_eliminate} from Cell({cell.row}, {cell.col}){{{cell.candidates}}}")
+            changed = cell.eliminate_candidates(to_eliminate)
 
     return changed
 
@@ -47,36 +50,3 @@ def hidden_singles_for_group(group: list[Cell]) -> list[tuple[Cell, int]]:
             (cell, next(iter(cell.candidates & hidden_singles)))
             for cell in group if cell.candidates & hidden_singles
         ]
-    
-def hidden_singles_for_column(puzzle: SudokuPuzzle, col: int) -> list[tuple[Cell, int]]:
-    """
-    Identifies hidden singles in a specific column.
-    Args:
-        col (int): Column index (0-8).
-    Returns:
-        list[tuple[Cell, int]]: List of hidden singles in the column.
-    """
-    group = puzzle.col_at(col)
-    return hidden_singles_for_group(group)
-
-def hidden_singles_for_row(puzzle: SudokuPuzzle, row: int) -> list[tuple[Cell, int]]:
-    """
-    Identifies hidden singles in a specific row.
-    Args:
-        row (int): Row index (0-8).
-    Returns:
-        list[tuple[Cell, int]]: List of hidden singles in the row.
-    """
-    group = puzzle.row_at(row)
-    return hidden_singles_for_group(group)
-
-def hidden_singles_for_box(puzzle: SudokuPuzzle, box: int) -> list[tuple[Cell, int]]:
-    """
-    Identifies hidden singles in a specific box.
-    Args:
-        box (int): Box index (0-8).
-    Returns:
-        list[tuple[Cell, int]]: List of hidden singles in the box.
-    """
-    group = puzzle.box_at(box)
-    return hidden_singles_for_group(group)
